@@ -3,7 +3,7 @@
     "description": "Szamlazz.hu API integrációs csomag PHP-hoz",
     "type": "library",
     "license": "MIT",
-    "version": "v1.0.5",
+    "version": "v1.0.6",
     "autoload": {
         "psr-4": {
             "Szamlazzphp\\": "src/"
@@ -26,7 +26,7 @@
         "guzzlehttp/guzzle": "^7.0",
         "ext-simplexml": "*",
         "ext-json": "*",
-        "illuminate/support": "*"
+        "illuminate/support": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.0"

@@ -18,9 +18,4 @@ enum PaymentMethod: string
             self::PayPal => 'PayPal'
         };
     }
-
-    public function __toString(): string
-    {
-        return $this->value . ' (' . $this->getComment() . ')';
-    }
 } 

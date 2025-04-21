@@ -4,6 +4,8 @@ namespace Szamlazzphp\Facades;
 
 use Illuminate\Support\Facades\Facade;
 use Szamlazzphp\Client\ClientInterface;
+use Szamlazzphp\Enum\ResponseVersion;
+use Szamlazzphp\Response\DownloadInvoiceResponse;
 
 /**
  * SzamlazzHU Facade
@@ -12,6 +14,7 @@ use Szamlazzphp\Client\ClientInterface;
  * @method static array reverseInvoice(string $invoiceId, bool $eInvoice, bool $requestInvoiceDownload)
  * @method static array issueInvoice(\Szamlazzphp\Invoice $invoice)
  * @method static void setRequestInvoiceDownload(bool $value)
+ * @method static DownloadInvoiceResponse downloadInvoicePdf(string $invoiceId, ResponseVersion $responseVersion = ResponseVersion::PDF, ?string $externalId = null): DownloadInvoiceResponse
  * 
  * @see \Szamlazzphp\Client\ClientInterface
  */

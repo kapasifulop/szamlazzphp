@@ -20,9 +20,4 @@ enum TaxSubject: int
             self::NoTaxID => 'Has no Hungarian VAT ID'
         };
     }
-
-    public function __toString(): string
-    {
-        return (string)$this->value;
-    }
 } 

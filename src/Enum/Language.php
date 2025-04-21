@@ -22,9 +22,4 @@ enum Language: string
             self::Slovak => 'Slovak'
         };
     }
-
-    public function __toString(): string
-    {
-        return $this->getName() . ' (' . $this->value . ')';
-    }
 } 
