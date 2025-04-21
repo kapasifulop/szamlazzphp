@@ -1,6 +1,6 @@
 # Számlázz.hu PHP
 
-A Számlázz.hu API-hoz készített PHP integráció. **FEJLESZTÉS ALATT ÁLL! Az alap számlakiállítási modul válaszai jelenleg átdolgozás alatt áll (a válasz nem array hanem objektum lesz)!**
+A Számlázz.hu API-hoz készített PHP integráció. **FEJLESZTÉS ALATT ÁLL! Az alap számlakiállítási modul válaszai jelenleg átdolgozás alatt állnak (a válasz nem array hanem objektum lesz)!**
 
 ## Telepítés
 
