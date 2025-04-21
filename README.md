@@ -284,10 +284,9 @@ $client->reverseInvoice('SZLA-123', true, true);
 
 ### Számla letöltése PDF formátumban
 ```php
-use Szamlazzphp\Enum\ResponseVersion;
 
 // Számla letöltése PDF-ben
-$response = $client->downloadInvoicePdf('SZLA-123', ResponseVersion::PDF);
+$response = $client->downloadInvoicePdf('SZLA-123');
 
 // Ellenőrzés, hogy sikeres volt-e a letöltés
 if ($response->isSuccess()) {
@@ -327,4 +326,4 @@ Az osztály segítségével egyszerűen kezelhető a számlák PDF-ben való let
 
 ## Licenc
 
-MIT 
+MIT
