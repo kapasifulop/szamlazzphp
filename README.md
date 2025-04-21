@@ -278,6 +278,49 @@ $client->getInvoiceData(null, 'ABC-123');
 $client->reverseInvoice('SZLA-123', true, true);
 ```
 
+### Számla letöltése PDF formátumban
+```php
+use Szamlazzphp\Enum\ResponseVersion;
+
+// Számla letöltése PDF-ben
+$response = $client->downloadInvoicePdf('SZLA-123', ResponseVersion::PDF);
+
+// Ellenőrzés, hogy sikeres volt-e a letöltés
+if ($response->isSuccess()) {
+    // PDF mentése fájlba
+    $response->savePdf('szamla.pdf');
+    // vagy
+    $response->storePdf('szamla.pdf');
+    
+    // Számla adatok lekérdezése
+    $invoiceId = $response->getInvoiceId();
+    $netTotal = $response->getNetTotal();
+    $grossTotal = $response->getGrossTotal();
+} else {
+    // Hiba esetén
+    $errorCode = $response->getErrorCode();
+    $errorMessage = $response->getErrorMessage();
+    echo "Hiba: {$errorMessage} (kód: {$errorCode})";
+}
+```
+
+A `DownloadInvoiceResponse` osztály a letöltött számla adatait tartalmazza:
+
+- `isSuccess()` - Sikeres volt-e a letöltés
+- `getErrorCode()` - Hiba kód lekérdezése
+- `getErrorMessage()` - Hibaüzenet lekérdezése
+- `getInvoiceId()` - Számla azonosító lekérdezése
+- `getNetTotal()` - Számla nettó összegének lekérdezése
+- `getGrossTotal()` - Számla bruttó összegének lekérdezése
+- `getPdf()` - PDF adatok lekérdezése
+- `savePdf($filename)` / `storePdf($filename)` - PDF mentése fájlba
+
+## DownloadInvoiceResponse osztály részletesen
+
+A `DownloadInvoiceResponse` osztály kezeli a számla PDF letöltésekor kapott válaszokat.
+
+Az osztály segítségével egyszerűen kezelhető a számlák PDF-ben való letöltése és a válaszok feldolgozása. Az osztály támogatja a fluent interfészt, így a metódusok láncolhatók.
+
 ## Licenc
 
 MIT 
