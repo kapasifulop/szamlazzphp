@@ -1,0 +1,43 @@
+{
+    "name": "szamlazzphp/szamlazzphp",
+    "description": "Szamlazz.hu API integrációs csomag PHP-hoz",
+    "type": "library",
+    "license": "MIT",
+    "version": "1.0.0",
+    "autoload": {
+        "psr-4": {
+            "Szamlazzphp\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Szamlazzphp\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Szerző"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^8.0",
+        "guzzlehttp/guzzle": "^7.0",
+        "ext-simplexml": "*",
+        "ext-json": "*",
+        "illuminate/support": "^8.0|^9.0|^10.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Szamlazzphp\\SzamlazzphpServiceProvider"
+            ],
+            "aliases": {
+                "SzamlazzHU": "Szamlazzphp\\Facades\\SzamlazzHU"
+            }
+        }
+    }
+} 
