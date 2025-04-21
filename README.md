@@ -316,7 +316,7 @@ A `DownloadInvoiceResponse` osztály a letöltött számla adatait tartalmazza:
 - `getInvoiceId()` - Számla azonosító lekérdezése
 - `getNetTotal()` - Számla nettó összegének lekérdezése
 - `getGrossTotal()` - Számla bruttó összegének lekérdezése
-- `getPdf()` - PDF adatok lekérdezése
+- `getPdf()` - PDF binary adatai
 - `savePdf($filename)` / `storePdf($filename)` - PDF mentése fájlba
 
 ## DownloadInvoiceResponse osztály részletesen
