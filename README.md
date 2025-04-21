@@ -267,6 +267,8 @@ $invoice = $builder->build();
 ### Számla kiállítása
 ```php
 $client->issueInvoice($invoice);
+// Vagy Laravelben
+// $response = SzamlazzHU::issueInvoice($invoice);
 ```
 
 ### Számla adatok lekérése
@@ -274,11 +276,15 @@ $client->issueInvoice($invoice);
 $client->getInvoiceData('SZLA-123');
 // vagy
 $client->getInvoiceData(null, 'ABC-123');
+// Vagy Laravelben
+// $response = SzamlazzHU::getInvoiceData('SZLA-123');
 ```
 
 ### Számla sztornózása
 ```php
 $client->reverseInvoice('SZLA-123', true, true);
+// Vagy Laravelben
+// $response = SzamlazzHU::reverseInvoice('SZLA-123', true, true);
 ```
 
 ### Számla letöltése PDF formátumban
@@ -286,6 +292,8 @@ $client->reverseInvoice('SZLA-123', true, true);
 
 // Számla letöltése PDF-ben
 $response = $client->downloadInvoicePdf('SZLA-123');
+// Vagy Laravelben
+// $response = SzamlazzHU::downloadInvoicePdf('SZLA-123')
 
 // Ellenőrzés, hogy sikeres volt-e a letöltés
 if ($response->isSuccess()) {
