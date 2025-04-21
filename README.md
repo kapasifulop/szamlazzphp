@@ -1,11 +1,11 @@
 # Számlázz.hu PHP
 
-A Számlázz.hu API-hoz készített PHP integráció. Ez a csomag a [szamlazz.js](https://github.com/ewngs/szamlazz.js) Node.js csomag PHP alapú portja.
+A Számlázz.hu API-hoz készített PHP integráció.
 
 ## Telepítés
 
 ```bash
-composer require szamlazzphp/szamlazzphp
+composer require kapasifulop/szamlazzphp
 ```
 
 ## Laravel integrációval
