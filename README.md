@@ -155,6 +155,7 @@ $client = new SzamlaAgentClient(
 );
 
 // Vagy felhasználónév-jelszó alapú kliens létrehozása
+// Felhasználónév és jelszó páros csak akkor használható, ha nincs bekapcsolva a kétlépcsős azonosítás a Számlázz.hu fiókban!
 // $client = new AuthBasedClient(
 //     'your_username',
 //     'your_password',
@@ -164,8 +165,6 @@ $client = new SzamlaAgentClient(
 //     1,     // responseVersion
 //     0      // timeout
 // );
-
-> **FONTOS:** Felhasználónév és jelszó páros csak akkor használható, ha nincs bekapcsolva a kétlépcsős azonosítás a Számlázz.hu fiókban!
 
 // Vevő létrehozása
 $buyer = new Buyer([
