@@ -16,7 +16,8 @@
     },
     "authors": [
         {
-            "name": "Szerző"
+            "name": "Kapási Fülöp | LaraSoft",
+            "email": "fulop@larasoft.hu"
         }
     ],
     "minimum-stability": "stable",
