@@ -5,6 +5,9 @@ namespace Szamlazzphp\Client;
 use Szamlazzphp\Invoice;
 use Szamlazzphp\Enum\ResponseVersion;
 use Szamlazzphp\Response\DownloadInvoiceResponse;
+use Szamlazzphp\Response\GetInvoiceDataResponse;
+use Szamlazzphp\Response\IssueInvoiceResponse;
+use Szamlazzphp\Response\ReverseInvoiceResponse;
 
 /**
  * Számlázz.hu API kliens interfész
@@ -17,9 +20,9 @@ interface ClientInterface
      * @param string|null $invoiceId Számla azonosító (számlaszám)
      * @param string|null $orderNumber Rendelésszám
      * @param bool $pdf PDF formátumban kéri-e a választ
-     * @return array A számla adatai
+     * @return GetInvoiceDataResponse A számla adatai
      */
-    public function getInvoiceData(?string $invoiceId = null, ?string $orderNumber = null, bool $pdf = false): array;
+    public function getInvoiceData(?string $invoiceId = null, ?string $orderNumber = null, bool $pdf = false): GetInvoiceDataResponse;
 
     /**
      * Számla sztornózása
@@ -27,17 +30,17 @@ interface ClientInterface
      * @param string $invoiceId Számla azonosító
      * @param bool $eInvoice E-számla generálása
      * @param bool $requestInvoiceDownload Számla letöltése PDF-ben
-     * @return array A sztornó számla adatai
+     * @return ReverseInvoiceResponse A sztornó számla adatai
      */
-    public function reverseInvoice(string $invoiceId, bool $eInvoice, bool $requestInvoiceDownload): array;
+    public function reverseInvoice(string $invoiceId, bool $eInvoice, bool $requestInvoiceDownload): ReverseInvoiceResponse;
 
     /**
      * Számla kiállítása
      * 
      * @param Invoice $invoice A kiállítandó számla objektum
-     * @return array A kiállított számla adatai
+     * @return IssueInvoiceResponse A kiállított számla adatai
      */
-    public function issueInvoice(Invoice $invoice): array;
+    public function issueInvoice(Invoice $invoice): IssueInvoiceResponse;
 
     /**
      * Számla letöltése PDF formátumban

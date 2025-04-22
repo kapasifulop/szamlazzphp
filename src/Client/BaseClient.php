@@ -9,6 +9,9 @@ use SimpleXMLElement;
 use Szamlazzphp\Invoice;
 use Szamlazzphp\Enum\ResponseVersion;
 use Szamlazzphp\Response\DownloadInvoiceResponse;
+use Szamlazzphp\Response\GetInvoiceDataResponse;
+use Szamlazzphp\Response\IssueInvoiceResponse;
+use Szamlazzphp\Response\ReverseInvoiceResponse;
 
 /**
  * Számlázz.hu API alap kliens
@@ -65,10 +68,10 @@ abstract class BaseClient
      * @param string|null $invoiceId Számla azonosító (számlaszám)
      * @param string|null $orderNumber Rendelésszám
      * @param bool $pdf PDF formátumban kéri-e a választ
-     * @return array A számla adatai
+     * @return GetInvoiceDataResponse A számla adatai
      * @throws Exception Ha hiányos az azonosítás vagy hiba történt a lekérdezéskor
      */
-    public function getInvoiceData(?string $invoiceId = null, ?string $orderNumber = null, bool $pdf = false): array
+    public function getInvoiceData(?string $invoiceId = null, ?string $orderNumber = null, bool $pdf = false): GetInvoiceDataResponse
     {
         if (empty($invoiceId) && empty($orderNumber)) {
             throw new Exception('A számla azonosító vagy a rendelésszám megadása kötelező');
@@ -86,10 +89,21 @@ abstract class BaseClient
         $response = $this->sendRequest('action-szamla_agent_xml', $xml);
         
         if (!$response['success']) {
-            throw new Exception($response['errorMessage'] ?? 'Hiba történt a számla adatok lekérdezésekor');
+            return (new GetInvoiceDataResponse(false))
+                ->setErrorMessage($response['errorMessage'] ?? 'Hiba történt a számla adatok lekérdezésekor')
+                ->setErrorCode($response['errorCode'] ?? null);
         }
         
-        return $this->parseSimpleXmlToArray($response['data']);
+        $invoiceData = $this->parseSimpleXmlToArray($response['data']);
+        
+        $dataResponse = new GetInvoiceDataResponse(true);
+        $dataResponse->setInvoiceData($invoiceData);
+        
+        if ($pdf && isset($response['data']) && !empty($response['data'])) {
+            $dataResponse->setPdf($response['data']);
+        }
+        
+        return $dataResponse;
     }
 
     /**
@@ -98,10 +112,10 @@ abstract class BaseClient
      * @param string $invoiceId Számla azonosító
      * @param bool $eInvoice E-számla generálása
      * @param bool $requestInvoiceDownload Számla letöltése PDF-ben
-     * @return array A sztornó számla adatai
+     * @return ReverseInvoiceResponse A sztornó számla adatai
      * @throws Exception Ha hiányos az azonosítás vagy hiba történt a sztornózáskor
      */
-    public function reverseInvoice(string $invoiceId, bool $eInvoice, bool $requestInvoiceDownload): array
+    public function reverseInvoice(string $invoiceId, bool $eInvoice, bool $requestInvoiceDownload): ReverseInvoiceResponse
     {
         if (empty($invoiceId)) {
             throw new Exception('A számla azonosító megadása kötelező');
@@ -124,31 +138,44 @@ abstract class BaseClient
         $response = $this->sendRequest('action-szamla_agent_st', $xml, true);
         
         if (!$response['success']) {
-            throw new Exception($response['errorMessage'] ?? 'Hiba történt a számla sztornózásakor');
+            return (new ReverseInvoiceResponse(false))
+                ->setErrorMessage($response['errorMessage'] ?? 'Hiba történt a számla sztornózásakor')
+                ->setErrorCode($response['errorCode'] ?? null);
         }
 
-        $data = [
-            'invoiceId' => $response['headers']['szlahu_szamlaszam'] ?? null,
-            'netTotal' => $response['headers']['szlahu_nettovegosszeg'] ?? null,
-            'grossTotal' => $response['headers']['szlahu_bruttovegosszeg'] ?? null,
-            'customerAccountUrl' => $response['headers']['szlahu_vevoifiokurl'] ?? null
-        ];
+        $reverseResponse = new ReverseInvoiceResponse(true);
+        
+        if (isset($response['headers']['szlahu_szamlaszam'])) {
+            $reverseResponse->setInvoiceId($response['headers']['szlahu_szamlaszam']);
+        }
+        
+        if (isset($response['headers']['szlahu_nettovegosszeg'])) {
+            $reverseResponse->setNetTotal($response['headers']['szlahu_nettovegosszeg']);
+        }
+        
+        if (isset($response['headers']['szlahu_bruttovegosszeg'])) {
+            $reverseResponse->setGrossTotal($response['headers']['szlahu_bruttovegosszeg']);
+        }
+        
+        if (isset($response['headers']['szlahu_vevoifiokurl'])) {
+            $reverseResponse->setCustomerAccountUrl($response['headers']['szlahu_vevoifiokurl']);
+        }
 
         if ($requestInvoiceDownload && isset($response['data'])) {
-            $data['pdf'] = $response['data'];
+            $reverseResponse->setPdf($response['data']);
         }
 
-        return $data;
+        return $reverseResponse;
     }
 
     /**
      * Számla kiállítása
      * 
      * @param Invoice $invoice A kiállítandó számla objektum
-     * @return array A kiállított számla adatai
+     * @return IssueInvoiceResponse A kiállított számla adatai
      * @throws Exception Ha hiba történt a számla kiállításakor
      */
-    public function issueInvoice(Invoice $invoice): array
+    public function issueInvoice(Invoice $invoice): IssueInvoiceResponse
     {
         $xml = $this->getXmlHeader('xmlszamla', 'agent') .
             $this->wrapWithElement('beallitasok', [
@@ -164,26 +191,44 @@ abstract class BaseClient
         $response = $this->sendRequest('action-xmlagentxmlfile', $xml, $this->responseVersion === 1);
         
         if (!$response['success']) {
-            throw new Exception($response['errorMessage'] ?? 'Hiba történt a számla kiállításakor');
+            return (new IssueInvoiceResponse(false))
+                ->setErrorMessage($response['errorMessage'] ?? 'Hiba történt a számla kiállításakor')
+                ->setErrorCode($response['errorCode'] ?? null);
         }
 
-        $data = [
-            'invoiceId' => $response['headers']['szlahu_szamlaszam'] ?? null,
-            'netTotal' => $response['headers']['szlahu_nettovegosszeg'] ?? null,
-            'grossTotal' => $response['headers']['szlahu_bruttovegosszeg'] ?? null,
-            'customerAccountUrl' => $response['headers']['szlahu_vevoifiokurl'] ?? null,
-        ];
+        $issueResponse = new IssueInvoiceResponse(true);
+        
+        if (isset($response['headers']['szlahu_szamlaszam'])) {
+            $issueResponse->setInvoiceId($response['headers']['szlahu_szamlaszam']);
+        }
+        
+        if (isset($response['headers']['szlahu_nettovegosszeg'])) {
+            $issueResponse->setNetTotal($response['headers']['szlahu_nettovegosszeg']);
+        }
+        
+        if (isset($response['headers']['szlahu_bruttovegosszeg'])) {
+            $issueResponse->setGrossTotal($response['headers']['szlahu_bruttovegosszeg']);
+        }
+        
+        if (isset($response['headers']['szlahu_vevoifiokurl'])) {
+            $issueResponse->setCustomerAccountUrl($response['headers']['szlahu_vevoifiokurl']);
+        }
 
         if ($this->requestInvoiceDownload && isset($response['data'])) {
             if ($this->responseVersion === 1) {
-                $data['pdf'] = $response['data'];
+                $issueResponse->setPdf($response['data']);
             } else {
                 $parsed = $this->parseSimpleXmlToArray($response['data']);
-                $data['pdf'] = base64_decode($parsed['pdf'] ?? '');
+                if (isset($parsed['pdf'])) {
+                    $issueResponse->setPdf(base64_decode($parsed['pdf']));
+                }
+                if (isset($parsed['kintlevoseg'])) {
+                    $issueResponse->setOutstandingAmount($parsed['kintlevoseg']);
+                }
             }
         }
         
-        return $data;
+        return $issueResponse;
     }
     
     /**

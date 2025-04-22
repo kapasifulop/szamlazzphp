@@ -25,7 +25,7 @@ SZAMLAZZHU_AUTH_TYPE=api_key
 # API kulcs alapú autentikáció
 SZAMLAZZHU_TOKEN=your_token
 
-# VAGY felhasználónév-jelszó alapú autentikáció csak akkor használható, ha nincs bekapcsolva a kétlépcsős azonosítás a Számlázz.hu fiókban!
+# VAGY felhasználónév-jelszó alapú autentikáció csak akkor használható, ha nincs bekapcsolva a kétlépcsős azonosítás a Számlázz.hu fiókban! https://docs.szamlazz.hu/hu/agent/basics/agent-user
 # SZAMLAZZHU_USER=your_username
 # SZAMLAZZHU_PASSWORD=your_password
 
@@ -37,7 +37,7 @@ SZAMLAZZHU_RESPONSE_VERSION=1             # Válasz verzió
 SZAMLAZZHU_TIMEOUT=30                     # Időtúllépés másodpercben
 ```
 
-> **FONTOS:** Felhasználónév és jelszó páros csak akkor használható, ha nincs bekapcsolva a kétlépcsős azonosítás a Számlázz.hu fiókban!
+> **FONTOS:** Felhasználónév és jelszó páros csak akkor használható, ha nincs bekapcsolva a kétlépcsős azonosítás a Számlázz.hu fiókban! [több](https://docs.szamlazz.hu/hu/agent/basics/agent-user)
 
 ### A SzamlazzHU Facade használata
 
