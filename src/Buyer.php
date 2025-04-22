@@ -60,6 +60,7 @@ class Buyer
             $output .= $innerPad . "<email>{$this->options['email']}</email>\n";
         }
 
+        // Email küldése
         if(!empty($this->options['sendEmail'])) {
             if($this->options['sendEmail'] == true) {
                 $output .= $innerPad . "<sendEmail>true</sendEmail>\n";
