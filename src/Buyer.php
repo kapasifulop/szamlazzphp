@@ -59,6 +59,14 @@ class Buyer
         if (!empty($this->options['email'])) {
             $output .= $innerPad . "<email>{$this->options['email']}</email>\n";
         }
+
+        if(!empty($this->options['sendEmail'])) {
+            if($this->options['sendEmail'] == true) {
+                $output .= $innerPad . "<sendEmail>true</sendEmail>\n";
+            } else {
+                $output .= $innerPad . "<sendEmail>false</sendEmail>\n";
+            }
+        }
         
         // Telefonszám
         if (!empty($this->options['phone'])) {
