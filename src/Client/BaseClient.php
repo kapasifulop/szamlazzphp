@@ -99,9 +99,9 @@ abstract class BaseClient
         $dataResponse = new GetInvoiceDataResponse(true);
         $dataResponse->setInvoiceData($invoiceData);
         
-        if ($pdf && isset($response['data']) && !empty($response['data'])) {
-            if(isset($response['data']['pdf'])) {
-                $dataResponse->setPdf(base64_decode($response['data']['pdf']));
+        if ($pdf && isset($invoiceData) && !empty($invoiceData)) {
+            if(isset($invoiceData['pdf'])) {
+                $dataResponse->setPdf(base64_decode($invoiceData['pdf']));
             }
         }
         
@@ -163,12 +163,15 @@ abstract class BaseClient
             $reverseResponse->setCustomerAccountUrl($response['headers']['szlahu_vevoifiokurl']);
         }
 
+        
+
         if ($requestInvoiceDownload && isset($response['data'])) {
             if($this->responseVersion == 1){
                 $reverseResponse->setPdf($response['data']);
             } else {
-                if(isset($response['data']['pdf'])) {
-                    $reverseResponse->setPdf(base64_decode($response['data']['pdf']));
+                $invoiceData = $this->parseSimpleXmlToArray($response['data']);
+                if(isset($invoiceData['pdf'])) {
+                    $reverseResponse->setPdf(base64_decode($invoiceData['pdf']));
                 }
             }
         }
