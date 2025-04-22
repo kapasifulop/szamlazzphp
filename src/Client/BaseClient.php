@@ -164,7 +164,13 @@ abstract class BaseClient
         }
 
         if ($requestInvoiceDownload && isset($response['data'])) {
-            $reverseResponse->setPdf($response['data']);
+            if($this->responseVersion == 1){
+                $reverseResponse->setPdf($response['data']);
+            } else {
+                if(isset($response['data']['pdf'])) {
+                    $reverseResponse->setPdf(base64_decode($response['data']['pdf']));
+                }
+            }
         }
 
         return $reverseResponse;

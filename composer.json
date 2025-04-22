@@ -3,7 +3,7 @@
     "description": "Szamlazz.hu API integrációs csomag PHP-hoz",
     "type": "library",
     "license": "MIT",
-    "version": "v1.0.9",
+    "version": "v1.1.0",
     "autoload": {
         "psr-4": {
             "Szamlazzphp\\": "src/"
