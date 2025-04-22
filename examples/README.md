@@ -1,39 +1,98 @@
 # Számlázz.hu PHP példák
 
-Ebben a mappában különböző példákat találsz a Számlázz.hu PHP könyvtár használatához. A példák segítenek megérteni, hogyan lehet különböző típusú számlákat kiállítani, számla adatokat lekérdezni és számlákat sztornózni.
+Ez a könyvtár különböző példákat tartalmaz a Számlázz.hu API használatához PHP nyelven.
 
-## Példák listája
+## Példa fájlok
 
-1. **basic-invoice.php** - Egyszerű számla kiállítása
-   * Alap API kulcs használata
-   * Számla kiállítása Builder pattern segítségével
-   * Több tétel hozzáadása
-   * PDF eredmény mentése
+### Alapvető számla kiállítás
 
-2. **advanced-invoice.php** - Haladó számla kiállítása
-   * Részletes vevő és eladó adatok
-   * Tételek részletes adatokkal
-   * Builder pattern használata lépésről lépésre
-   * Egyedi számlaszám előtag és dátumok beállítása
+- [basic-invoice.php](basic-invoice.php) - Egyszerű számla kiállítása egy tétellel
 
-3. **get-invoice-data.php** - Számla adatok lekérdezése
-   * Számla lekérdezése számlaszám alapján
-   * Számla lekérdezése rendelésszám alapján
-   * PDF letöltése a számlához
+```php
+// Számla kiállítása
+$response = $client->issueInvoice($invoice);
 
-4. **reverse-invoice.php** - Számla sztornózása
-   * Számla sztornózása számlaszám alapján
-   * Sztornó számla PDF letöltése
+if ($response->isSuccess()) {
+    // Számla adatok lekérdezése
+    $invoiceId = $response->getInvoiceId();
+    $netTotal = $response->getNetTotal();
+    $grossTotal = $response->getGrossTotal();
+    
+    // PDF mentése
+    $response->savePdf('szamla.pdf');
+}
+```
 
-5. **auth-based-client.php** - Felhasználónév-jelszó alapú kliens használata
-   * Számla kiállítása felhasználónév-jelszó autentikációval
-   * Készpénzes fizetési mód példa
+### Haladó számla kiállítás
 
-6. **eu-invoice.php** - EU-s számla kiállítása
-   * EU-s partner számára történő számla kiállítása
-   * EUR pénznem használata
-   * ÁFA mentesség kezelése
-   * Árfolyam beállítása
+- [advanced-invoice.php](advanced-invoice.php) - Összetettebb számla kiállítása több tétellel, különböző opciókkal
+
+### Számla sztornózás
+
+- [reverse-invoice.php](reverse-invoice.php) - Korábban kiállított számla sztornózása
+
+```php
+// Számla sztornózása
+$response = $client->reverseInvoice('SZÁMLA-001', true, true);
+
+if ($response->isSuccess()) {
+    // Sztornó számla adatok lekérdezése
+    $invoiceId = $response->getInvoiceId();
+    $netTotal = $response->getNetTotal();
+    $grossTotal = $response->getGrossTotal();
+    
+    // PDF mentése
+    $response->savePdf('sztorno_szamla.pdf');
+}
+```
+
+### Számlaadatok lekérdezése
+
+- [get-invoice-data.php](get-invoice-data.php) - Számla adatok lekérdezése számlaszám vagy rendelésszám alapján
+
+```php
+// Számla adatok lekérdezése
+$response = $client->getInvoiceData('SZÁMLA-001', null, true);
+
+if ($response->isSuccess()) {
+    // Számla adatok lekérdezése
+    $invoiceData = $response->getInvoiceData();
+    
+    // Ha PDF-et is kértünk
+    if ($response->getPdf()) {
+        $response->savePdf('szamla.pdf');
+    }
+}
+```
+
+### Számla letöltés PDF formátumban
+
+- [download-invoice.php](download-invoice.php) - Kiállított számla letöltése PDF formátumban
+
+```php
+// Számla letöltése
+$response = $client->downloadInvoicePdf('SZÁMLA-001');
+
+if ($response->isSuccess()) {
+    // PDF mentése
+    $response->savePdf('szamla.pdf');
+}
+```
+
+### EU-s számla kiállítása
+
+- [eu-invoice.php](eu-invoice.php) - EU-s partner részére történő számlázás
+
+### Autentikációs módok
+
+- [auth-based-client.php](auth-based-client.php) - Felhasználónév-jelszó alapú kliens használata
+
+> **FONTOS:** Felhasználónév és jelszó páros csak akkor használható, ha nincs bekapcsolva a kétlépcsős azonosítás a Számlázz.hu fiókban! [több információ](https://docs.szamlazz.hu/hu/agent/basics/agent-user)
+
+## Laravel integráció
+
+- [laravel-example.php](laravel-example.php) - Példa a Laravel integrációra
+- [laravel-example-2.php](laravel-example-2.php) - További Laravel példa a SzamlazzHU facade használatára
 
 ## Használat
 

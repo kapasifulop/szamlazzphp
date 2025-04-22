@@ -51,7 +51,10 @@ use Szamlazzphp\Enum\Currency;
 use Szamlazzphp\Enum\Language;
 
 // Számla lekérése
-$invoice = SzamlazzHU::getInvoiceData('SZLA-12345');
+$response = SzamlazzHU::getInvoiceData('SZLA-12345');
+if ($response->isSuccess()) {
+    $invoiceData = $response->getInvoiceData();
+}
 
 // Számla kiállítása
 $invoice = (new InvoiceBuilder($buyer))
@@ -61,10 +64,16 @@ $invoice = (new InvoiceBuilder($buyer))
     ->setLanguage(Language::Hungarian)
     ->build();
 
-$result = SzamlazzHU::issueInvoice($invoice);
+$response = SzamlazzHU::issueInvoice($invoice);
+if ($response->isSuccess()) {
+    $invoiceId = $response->getInvoiceId();
+}
 
 // Számla sztornózása
-$result = SzamlazzHU::reverseInvoice('SZLA-12345', true, true);
+$response = SzamlazzHU::reverseInvoice('SZLA-12345', true, true);
+if ($response->isSuccess()) {
+    $reversedInvoiceId = $response->getInvoiceId();
+}
 ```
 
 ### Alternatív használati módok
@@ -105,11 +114,11 @@ class InvoiceController extends Controller
             ->build();
         
         // Számla kiállítása
-        $result = $this->client->issueInvoice($invoice);
+        $response = $this->client->issueInvoice($invoice);
         
         return response()->json([
-            'success' => true,
-            'invoice_id' => $result['invoiceId']
+            'success' => $response->isSuccess(),
+            'invoice_id' => $response->getInvoiceId()
         ]);
     }
 }
@@ -124,7 +133,7 @@ public function downloadInvoice($invoiceId)
     $client = app(ClientInterface::class);
     
     // Számla adatok lekérdezése
-    $invoiceData = $client->getInvoiceData($invoiceId, null, true);
+    $response = $client->getInvoiceData($invoiceId, null, true);
     
     // További feldolgozás...
 }
@@ -205,10 +214,14 @@ $invoice = (new InvoiceBuilder($buyer))
     ->build();
 
 // Számla kiállítása
-$result = $client->issueInvoice($invoice);
+$response = $client->issueInvoice($invoice);
 
 // Eredmény
-echo "Számla azonosító: " . $result['invoiceId'] . PHP_EOL;
+if ($response->isSuccess()) {
+    echo "Számla sikeresen kiállítva. Azonosító: " . $response->getInvoiceId() . PHP_EOL;
+} else {
+    echo "Hiba történt: " . $response->getErrorMessage() . PHP_EOL;
+}
 
 // Közvetlenül is létrehozható a számla (egyszerűbb esetekre)
 $directInvoice = new Invoice(
@@ -266,30 +279,77 @@ $invoice = $builder->build();
 
 ### Számla kiállítása
 ```php
-$client->issueInvoice($invoice);
+$response = $client->issueInvoice($invoice);
 // Vagy Laravelben
 // $response = SzamlazzHU::issueInvoice($invoice);
+
+if ($response->isSuccess()) {
+    // Számla adatok lekérdezése
+    $invoiceId = $response->getInvoiceId();
+    $netTotal = $response->getNetTotal();
+    $grossTotal = $response->getGrossTotal();
+    $customerAccountUrl = $response->getCustomerAccountUrl();
+    
+    // Ha kértük a PDF letöltését
+    $pdfData = $response->getPdf();
+    $response->savePdf('szamla.pdf');
+} else {
+    // Hiba esetén
+    $errorCode = $response->getErrorCode();
+    $errorMessage = $response->getErrorMessage();
+    echo "Hiba: {$errorMessage} (kód: {$errorCode})";
+}
 ```
 
 ### Számla adatok lekérése
 ```php
-$client->getInvoiceData('SZLA-123');
+$response = $client->getInvoiceData('SZLA-123');
 // vagy
-$client->getInvoiceData(null, 'ABC-123');
+$response = $client->getInvoiceData(null, 'ABC-123');
 // Vagy Laravelben
 // $response = SzamlazzHU::getInvoiceData('SZLA-123');
+
+if ($response->isSuccess()) {
+    // Számla adatok lekérdezése
+    $invoiceData = $response->getInvoiceData();
+    
+    // Ha PDF-et is kértünk
+    if ($response->getPdf()) {
+        $response->savePdf('szamla.pdf');
+    }
+} else {
+    // Hiba esetén
+    $errorCode = $response->getErrorCode();
+    $errorMessage = $response->getErrorMessage();
+    echo "Hiba: {$errorMessage} (kód: {$errorCode})";
+}
 ```
 
 ### Számla sztornózása
 ```php
-$client->reverseInvoice('SZLA-123', true, true);
+$response = $client->reverseInvoice('SZLA-123', true, true);
 // Vagy Laravelben
 // $response = SzamlazzHU::reverseInvoice('SZLA-123', true, true);
+
+if ($response->isSuccess()) {
+    // Sztornó számla adatok lekérdezése
+    $invoiceId = $response->getInvoiceId();
+    $netTotal = $response->getNetTotal();
+    $grossTotal = $response->getGrossTotal();
+    
+    // Ha kértük a PDF letöltését
+    $pdfData = $response->getPdf();
+    $response->savePdf('sztorno_szamla.pdf');
+} else {
+    // Hiba esetén
+    $errorCode = $response->getErrorCode();
+    $errorMessage = $response->getErrorMessage();
+    echo "Hiba: {$errorMessage} (kód: {$errorCode})";
+}
 ```
 
 ### Számla letöltése PDF formátumban
 ```php
-
 // Számla letöltése PDF-ben
 $response = $client->downloadInvoicePdf('SZLA-123');
 // Vagy Laravelben
@@ -314,7 +374,53 @@ if ($response->isSuccess()) {
 }
 ```
 
-A `DownloadInvoiceResponse` osztály a letöltött számla adatait tartalmazza:
+## Válasz osztályok részletesen
+
+A könyvtár a következő válasz osztályokat használja:
+
+### IssueInvoiceResponse - Számla kiállítási válasz
+
+Az `IssueInvoiceResponse` osztály a számla kiállításakor kapott válaszokat kezeli:
+
+- `isSuccess()` - Sikeres volt-e a kiállítás
+- `getErrorCode()` - Hiba kód lekérdezése
+- `getErrorMessage()` - Hibaüzenet lekérdezése
+- `getInvoiceId()` - Számla azonosító lekérdezése
+- `getNetTotal()` - Számla nettó összegének lekérdezése
+- `getGrossTotal()` - Számla bruttó összegének lekérdezése
+- `getOutstandingAmount()` - Kintlevőség lekérdezése
+- `getCustomerAccountUrl()` - Vevői fiók URL lekérdezése
+- `getPdf()` - PDF binary adatai
+- `savePdf($filename)` / `storePdf($filename)` - PDF mentése fájlba
+
+### ReverseInvoiceResponse - Sztornó számla válasz
+
+A `ReverseInvoiceResponse` osztály a számla sztornózásakor kapott válaszokat kezeli:
+
+- `isSuccess()` - Sikeres volt-e a sztornózás
+- `getErrorCode()` - Hiba kód lekérdezése
+- `getErrorMessage()` - Hibaüzenet lekérdezése
+- `getInvoiceId()` - Számla azonosító lekérdezése
+- `getNetTotal()` - Számla nettó összegének lekérdezése
+- `getGrossTotal()` - Számla bruttó összegének lekérdezése
+- `getCustomerAccountUrl()` - Vevői fiók URL lekérdezése
+- `getPdf()` - PDF binary adatai
+- `savePdf($filename)` / `storePdf($filename)` - PDF mentése fájlba
+
+### GetInvoiceDataResponse - Számla adat lekérdezési válasz
+
+A `GetInvoiceDataResponse` osztály a számla adatok lekérdezésekor kapott válaszokat kezeli:
+
+- `isSuccess()` - Sikeres volt-e a lekérdezés
+- `getErrorCode()` - Hiba kód lekérdezése
+- `getErrorMessage()` - Hibaüzenet lekérdezése
+- `getInvoiceData()` - Számla adatok lekérdezése
+- `getPdf()` - PDF binary adatai (ha kértük a PDF-et)
+- `savePdf($filename)` / `storePdf($filename)` - PDF mentése fájlba
+
+### DownloadInvoiceResponse - Számla letöltési válasz
+
+A `DownloadInvoiceResponse` osztály a számla PDF letöltésekor kapott válaszokat kezeli:
 
 - `isSuccess()` - Sikeres volt-e a letöltés
 - `getErrorCode()` - Hiba kód lekérdezése
@@ -324,12 +430,6 @@ A `DownloadInvoiceResponse` osztály a letöltött számla adatait tartalmazza:
 - `getGrossTotal()` - Számla bruttó összegének lekérdezése
 - `getPdf()` - PDF binary adatai
 - `savePdf($filename)` / `storePdf($filename)` - PDF mentése fájlba
-
-## DownloadInvoiceResponse osztály részletesen
-
-A `DownloadInvoiceResponse` osztály kezeli a számla PDF letöltésekor kapott válaszokat.
-
-Az osztály segítségével egyszerűen kezelhető a számlák PDF-ben való letöltése és a válaszok feldolgozása. Az osztály támogatja a fluent interfészt, így a metódusok láncolhatók.
 
 ## Licenc
 

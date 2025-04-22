@@ -5,98 +5,106 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use Szamlazzphp\Client\SzamlaAgentClient;
 use Szamlazzphp\Enum\ResponseVersion;
 
-// API kulcs alapú kliens létrehozása
-$client = new SzamlaAgentClient(
-    'az_ön_api_kulcsa', // Ide a valódi API kulcs kerül
-    false,  // eInvoice: nem releváns a letöltésnél
-    false   // requestInvoiceDownload: nem releváns a letöltésnél, mivel direkt letöltést kérünk
-);
+/**
+ * Példa számla letöltésre
+ * 
+ * Ez a példa bemutatja, hogyan tölthetünk le egy számlát PDF formátumban
+ * a Számlázz.hu rendszeréből többféle módon.
+ * 
+ * A példa a SzamlaAgentClient-et használja API kulcs alapú autentikációval.
+ */
 
-// Vagy felhasználónév-jelszó alapú kliens létrehozása
-// $client = new AuthBasedClient(
-//     'your_username',
-//     'your_password',
-//     false, // eInvoice
-//     true,  // requestInvoiceDownload
-//     1,     // downloadedInvoiceCount
-//     1,     // responseVersion
-//     0      // timeout
-// );
+// Hiba megjelenítés engedélyezése fejlesztéshez
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
 
+// API kulcs és egyéb beállítások
+$apiKey = 'az-on-szamlazz-hu-api-kulcsa';
 
-// A letöltendő számla száma
-$invoiceId = 'WEB-2023-123';
+// Kliens létrehozása
+$client = new SzamlaAgentClient($apiKey);
+
+// Számlaszám, amelyet le szeretnénk tölteni
+$invoiceNumber = 'TESZT-2023-001';
 
 try {
-    // 1. módszer: alapértelmezett PDF válasz verzióval
-    $response = $client->downloadInvoicePdf($invoiceId);
+    //------------------------------------------------------------
+    // 1. Számla letöltése egyszerű módon (bináris válasz)
+    //------------------------------------------------------------
+    echo "1. Számla letöltése egyszerű módon (PDF formátumban)...\n";
     
-    // Ellenőrizzük, hogy sikeres volt-e a letöltés
+    $response = $client->downloadInvoicePdf($invoiceNumber);
+    
     if ($response->isSuccess()) {
-        // Számla adatok kiírása
-        echo "Számla sikeresen letöltve!" . PHP_EOL;
+        // Számla mentése fájlba
+        $pdfPath1 = __DIR__ . '/szamla1_' . str_replace('/', '_', $invoiceNumber) . '.pdf';
+        $response->savePdf($pdfPath1);
+        echo "A számla sikeresen letöltve és elmentve: {$pdfPath1}\n";
         
-        // PDF mentése fájlba
-        $pdfPath = __DIR__ . '/szamla_' . $invoiceId . '.pdf';
-        $response->savePdf($pdfPath);
-        // vagy ugyanez más néven:
-        // $response->storePdf($pdfPath);
+        // Alternatív mentési mód
+        $pdfPath2 = __DIR__ . '/szamla1_alt_' . str_replace('/', '_', $invoiceNumber) . '.pdf';
+        $response->storePdf($pdfPath2);
+        echo "A számla sikeresen letöltve és elmentve (alternatív módon): {$pdfPath2}\n";
         
-        echo "A számla PDF elmentve: " . $pdfPath . PHP_EOL;
+        // A PDF adatok közvetlen elérése, ha további feldolgozásra van szükség
+        $pdfData = $response->getPdf();
+        echo "A PDF mérete: " . strlen($pdfData) . " bájt\n";
     } else {
-        // Hiba esetén
-        echo "Hiba történt a számla letöltése során!" . PHP_EOL;
-        echo "Hibakód: " . $response->getErrorCode() . PHP_EOL;
-        echo "Hibaüzenet: " . $response->getErrorMessage() . PHP_EOL;
+        echo "Hiba történt a számla letöltése közben: " . $response->getErrorMessage() . "\n";
+        if ($response->getErrorCode()) {
+            echo "Hibakód: " . $response->getErrorCode() . "\n";
+        }
     }
     
-    // 2. módszer: XML válasz verzióval (több adat)
-    $xmlResponse = $client->downloadInvoicePdf(
-        $invoiceId,
-        ResponseVersion::XML  // Enum érték használata
-    );
+    //------------------------------------------------------------
+    // 2. Számla letöltése XML válasszal (több információt ad)
+    //------------------------------------------------------------
+    echo "\n2. Számla letöltése XML válasszal...\n";
     
-    if ($xmlResponse->isSuccess()) {
-        // Számla adatok kiírása
-        echo "Számla sikeresen letöltve (XML verzió)!" . PHP_EOL;
-        echo "Számla azonosító: " . $xmlResponse->getInvoiceId() . PHP_EOL;
-        echo "Nettó összeg: " . $xmlResponse->getNetTotal() . PHP_EOL;
-        echo "Bruttó összeg: " . $xmlResponse->getGrossTotal() . PHP_EOL;
+    $response = $client->downloadInvoicePdf($invoiceNumber, ResponseVersion::XML);
+    
+    if ($response->isSuccess()) {
+        // Az előző módszerhez hasonlóan elmenthetjük a PDF-et
+        $pdfPath3 = __DIR__ . '/szamla2_' . str_replace('/', '_', $invoiceNumber) . '.pdf';
+        $response->savePdf($pdfPath3);
+        echo "A számla sikeresen letöltve és elmentve: {$pdfPath3}\n";
         
-        // PDF mentése fájlba
-        $pdfXmlPath = __DIR__ . '/szamla_xml_' . $xmlResponse->getInvoiceId() . '.pdf';
-        $xmlResponse->savePdf($pdfXmlPath);
-        
-        echo "A számla PDF elmentve: " . $pdfXmlPath . PHP_EOL;
+        // XML válasz esetén többet tudunk a számláról
+        echo "Számla azonosító: " . $response->getInvoiceId() . "\n";
+        echo "Nettó összeg: " . $response->getNetTotal() . "\n";
+        echo "Bruttó összeg: " . $response->getGrossTotal() . "\n";
     } else {
-        // Hiba esetén
-        echo "Hiba történt a számla letöltése során (XML verzió)!" . PHP_EOL;
-        echo "Hibakód: " . $xmlResponse->getErrorCode() . PHP_EOL;
-        echo "Hibaüzenet: " . $xmlResponse->getErrorMessage() . PHP_EOL;
+        echo "Hiba történt a számla letöltése közben: " . $response->getErrorMessage() . "\n";
+        if ($response->getErrorCode()) {
+            echo "Hibakód: " . $response->getErrorCode() . "\n";
+        }
     }
     
-    // 3. módszer: Letöltés külső azonosító alapján
-    $externalId = 'RENDELES-123';
-    $externalResponse = $client->downloadInvoicePdf(
-        '',  // Üres számla azonosító
-        ResponseVersion::XML,
-        $externalId
-    );
+    //------------------------------------------------------------
+    // 3. Számla letöltése külső azonosító alapján
+    //------------------------------------------------------------
+    echo "\n3. Számla letöltése külső azonosító alapján...\n";
     
-    if ($externalResponse->isSuccess()) {
-        echo "Számla sikeresen letöltve külső azonosító alapján!" . PHP_EOL;
-        echo "Számla azonosító: " . $externalResponse->getInvoiceId() . PHP_EOL;
+    // Csak akkor használható, ha a számla létrehozásakor külső azonosítót is megadtunk
+    $externalId = 'KULSO-AZONOSITO-123';
+    
+    $response = $client->downloadInvoicePdf('', ResponseVersion::XML, $externalId);
+    
+    if ($response->isSuccess()) {
+        $pdfPath4 = __DIR__ . '/szamla3_kulso_' . str_replace('/', '_', $externalId) . '.pdf';
+        $response->savePdf($pdfPath4);
+        echo "A számla sikeresen letöltve és elmentve: {$pdfPath4}\n";
         
-        // PDF mentése fájlba
-        $pdfExternalPath = __DIR__ . '/szamla_ext_' . $externalResponse->getInvoiceId() . '.pdf';
-        $externalResponse->savePdf($pdfExternalPath);
-        
-        echo "A számla PDF elmentve: " . $pdfExternalPath . PHP_EOL;
+        echo "Számla azonosító: " . $response->getInvoiceId() . "\n";
+        echo "Nettó összeg: " . $response->getNetTotal() . "\n";
+        echo "Bruttó összeg: " . $response->getGrossTotal() . "\n";
     } else {
-        echo "Hiba történt a számla letöltése során külső azonosító alapján!" . PHP_EOL;
-        echo "Hibaüzenet: " . $externalResponse->getErrorMessage() . PHP_EOL;
+        echo "Hiba történt a számla letöltése közben külső azonosító alapján: " . $response->getErrorMessage() . "\n";
+        if ($response->getErrorCode()) {
+            echo "Hibakód: " . $response->getErrorCode() . "\n";
+        }
     }
     
 } catch (Exception $e) {
-    echo "Kivétel történt a számla letöltése során: " . $e->getMessage() . PHP_EOL;
+    echo "Kivétel történt: " . $e->getMessage() . "\n";
 } 

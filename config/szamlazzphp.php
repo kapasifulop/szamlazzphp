@@ -26,7 +26,7 @@ return [
     'e_invoice' => env('SZAMLAZZHU_E_INVOICE', false),
     'request_invoice_download' => env('SZAMLAZZHU_DOWNLOAD', true),
     'downloaded_invoice_count' => env('SZAMLAZZHU_DOWNLOAD_COUNT', 1),
-    'response_version' => env('SZAMLAZZHU_RESPONSE_VERSION', 1),
+    'response_version' => env('SZAMLAZZHU_RESPONSE_VERSION', 2),
 
     /*
     |--------------------------------------------------------------------------

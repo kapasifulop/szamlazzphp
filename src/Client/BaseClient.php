@@ -23,7 +23,7 @@ abstract class BaseClient
     protected bool $eInvoice = false;
     protected bool $requestInvoiceDownload = false;
     protected int $downloadedInvoiceCount = 1;
-    protected int $responseVersion = 1;
+    protected int $responseVersion = 2;
     protected int $timeout = 0;
 
     /**
@@ -46,7 +46,7 @@ abstract class BaseClient
         bool $eInvoice = false,
         bool $requestInvoiceDownload = false,
         int $downloadedInvoiceCount = 1,
-        int $responseVersion = 1,
+        int $responseVersion = 2,
         int $timeout = 0
     ) {
         $this->eInvoice = $eInvoice;
@@ -100,7 +100,9 @@ abstract class BaseClient
         $dataResponse->setInvoiceData($invoiceData);
         
         if ($pdf && isset($response['data']) && !empty($response['data'])) {
-            $dataResponse->setPdf($response['data']);
+            if(isset($response['data']['pdf'])) {
+                $dataResponse->setPdf(base64_decode($response['data']['pdf']));
+            }
         }
         
         return $dataResponse;

@@ -52,7 +52,7 @@ class SzamlazzphpServiceProvider extends ServiceProvider
                     $config['e_invoice'] ?? false,
                     $config['request_invoice_download'] ?? false,
                     $config['downloaded_invoice_count'] ?? 1,
-                    $config['response_version'] ?? 1,
+                    $config['response_version'] ?? 2,
                     $config['timeout'] ?? 0
                 );
             } 
@@ -68,7 +68,7 @@ class SzamlazzphpServiceProvider extends ServiceProvider
                     $config['e_invoice'] ?? false,
                     $config['request_invoice_download'] ?? false,
                     $config['downloaded_invoice_count'] ?? 1,
-                    $config['response_version'] ?? 1,
+                    $config['response_version'] ?? 2,
                     $config['timeout'] ?? 0
                 );
             }

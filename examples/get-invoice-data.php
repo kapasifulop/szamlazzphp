@@ -3,68 +3,104 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Szamlazzphp\Client\SzamlaAgentClient;
+use Szamlazzphp\Enum\ResponseVersion;
 
-// API kulcs alapú kliens létrehozása
+/**
+ * Példa számlaadat lekérdezése
+ * 
+ * Ez a példa bemutatja, hogyan lehet lekérdezni egy számla adatait 
+ * a Számlázz.hu rendszeréből számlaszám vagy rendelésszám alapján.
+ * 
+ * A példa a SzamlaAgentClient-et használja API kulcs alapú autentikációval.
+ */
+
+// Hiba megjelenítés engedélyezése fejlesztéshez
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
+
+// API kulcs és egyéb beállítások
+$apiKey = 'az-on-szamlazz-hu-api-kulcsa';
+$eInvoice = false;                  // E-számla generálása
+$requestInvoiceDownload = true;     // Számla letöltése PDF-ben
+$downloadedInvoiceCount = 1;        // Letöltendő példányszám
+$responseVersion = 1;               // Válasz verzió (1: régi, 2: XML)
+$timeout = 30;                      // Időtúllépés másodpercben
+
+// Kliens létrehozása
 $client = new SzamlaAgentClient(
-    'az_ön_api_kulcsa', // Ide a valódi API kulcs kerül
-    false,
-    false
+    $apiKey,
+    $eInvoice,
+    $requestInvoiceDownload,
+    $downloadedInvoiceCount,
+    $responseVersion,
+    $timeout
 );
 
-// Számlaszám, amelyet le szeretnénk kérdezni
-$invoiceId = 'WEB-2023-123';
-
 try {
-    // 1. Számla lekérdezése számlaszám alapján (PDF nélkül)
-    $invoiceData = $client->getInvoiceData($invoiceId, null, false);
+    // 1. Számla adatok lekérése számlaszám alapján
+    $response = $client->getInvoiceData('TESZT-2023-001', null, true);
     
-    // Az eredmény feldolgozása
-    echo "Számla adatok lekérdezve: {$invoiceId}" . PHP_EOL;
-    echo "Vevő: " . ($invoiceData['vevo']['nev'] ?? 'N/A') . PHP_EOL;
-    echo "Kiállítás dátuma: " . ($invoiceData['fejlec']['keltDatum'] ?? 'N/A') . PHP_EOL;
-    echo "Nettó összeg: " . ($invoiceData['osszesites']['nettoOsszesen'] ?? 'N/A') . PHP_EOL;
-    echo "Bruttó összeg: " . ($invoiceData['osszesites']['bruttoOsszesen'] ?? 'N/A') . PHP_EOL;
-    
-    // Tételek listázása
-    if (isset($invoiceData['tetelek']['tetel'])) {
-        $tetelek = $invoiceData['tetelek']['tetel'];
-        // Ha csak egy tétel van, akkor nem tömb formában kapjuk
-        if (!isset($tetelek[0])) {
-            $tetelek = [$tetelek];
+    if ($response->isSuccess()) {
+        echo "A számla adatok sikeresen lekérdezve." . PHP_EOL;
+        
+        // Az összes számlaadatot tartalmazó tömb
+        $invoiceData = $response->getInvoiceData();
+        
+        // Néhány mező kinyerése a válaszból (példa)
+        if (isset($invoiceData['alap'])) {
+            $alap = $invoiceData['alap'];
+            echo "Számla szám: " . ($alap['szamlaszam'] ?? 'N/A') . PHP_EOL;
+            echo "Kelt: " . ($alap['kelt'] ?? 'N/A') . PHP_EOL;
+            echo "Fizetési határidő: " . ($alap['fizHat'] ?? 'N/A') . PHP_EOL;
+            echo "Fizetési mód: " . ($alap['fizmod'] ?? 'N/A') . PHP_EOL;
         }
         
-        echo "\nSzámla tételek:\n";
-        foreach ($tetelek as $index => $tetel) {
-            echo ($index + 1) . ". " . ($tetel['megnevezes'] ?? 'N/A') . " - ";
-            echo ($tetel['mennyiseg'] ?? 'N/A') . " " . ($tetel['mennyisegiEgyseg'] ?? 'N/A') . " - ";
-            echo "Nettó: " . ($tetel['nettoErtek'] ?? 'N/A') . " Ft, ";
-            echo "Bruttó: " . ($tetel['bruttoErtek'] ?? 'N/A') . " Ft\n";
+        // Vevő adatok
+        if (isset($invoiceData['vevo'])) {
+            $vevo = $invoiceData['vevo'];
+            echo "Vevő neve: " . ($vevo['nev'] ?? 'N/A') . PHP_EOL;
         }
-    }
-    
-    // 2. Ugyanaz PDF-fel (másik példa)
-    echo "\nPDF letöltése a számlához...\n";
-    $invoiceDataWithPdf = $client->getInvoiceData($invoiceId, null, true);
-    
-    if (isset($invoiceDataWithPdf['pdf'])) {
-        $pdfPath = __DIR__ . '/' . $invoiceId . '.pdf';
-        file_put_contents($pdfPath, base64_decode($invoiceDataWithPdf['pdf']));
-        echo "A számla PDF elmentve: " . $pdfPath . PHP_EOL;
+        
+        // Tételek
+        if (isset($invoiceData['tetelek']['tetel'])) {
+            $tetelek = $invoiceData['tetelek']['tetel'];
+            // Ha csak egy tétel van, akkor a tetelek.tetel egy asszociatív tömb, 
+            // különben tömbök tömbje
+            if (isset($tetelek['megnevezes'])) {
+                echo "1 tétel található a számlán:" . PHP_EOL;
+                echo "  - " . $tetelek['megnevezes'] . " (" . $tetelek['nettoar'] . " " . $invoiceData['alap']['penznem'] . ")" . PHP_EOL;
+            } else {
+                echo count($tetelek) . " tétel található a számlán:" . PHP_EOL;
+                foreach ($tetelek as $tetel) {
+                    echo "  - " . $tetel['megnevezes'] . " (" . $tetel['nettoar'] . " " . $invoiceData['alap']['penznem'] . ")" . PHP_EOL;
+                }
+            }
+        }
+        
+        // PDF mentése ha kértük és van PDF a válaszban
+        if ($response->getPdf()) {
+            $pdfFile = 'szamla_' . str_replace('/', '_', $invoiceData['alap']['szamlaszam'] ?? 'ismeretlen') . '.pdf';
+            $response->savePdf($pdfFile);
+            echo "PDF elmentve: $pdfFile" . PHP_EOL;
+        }
     } else {
-        echo "A PDF nem elérhető a számlához." . PHP_EOL;
+        echo "Hiba történt a számla adatok lekérésekor: " . $response->getErrorMessage() . PHP_EOL;
     }
     
-    // 3. Számla lekérdezése rendelésszám alapján
-    $orderNumber = 'ORD-2023-042';
-    echo "\nSzámla keresése rendelésszám alapján: {$orderNumber}\n";
-    $invoiceByOrder = $client->getInvoiceData(null, $orderNumber, false);
+    // 2. Számla adatok lekérése rendelésszám alapján
+    // Ezt csak akkor használjuk, ha ismerjük a rendelésszámot
+    /*
+    $response = $client->getInvoiceData(null, 'R-2023-001', true);
     
-    if (!empty($invoiceByOrder)) {
-        echo "Talált számla: " . ($invoiceByOrder['alap']['szamlaszam'] ?? 'N/A') . PHP_EOL;
+    if ($response->isSuccess()) {
+        echo "A számla adatok sikeresen lekérdezve rendelésszám alapján." . PHP_EOL;
+        $invoiceData = $response->getInvoiceData();
+        // További feldolgozás...
     } else {
-        echo "Nem található számla a megadott rendelésszámmal." . PHP_EOL;
+        echo "Hiba történt a számla adatok lekérésekor rendelésszám alapján: " . $response->getErrorMessage() . PHP_EOL;
     }
+    */
     
 } catch (Exception $e) {
-    echo "Hiba történt a számla adatok lekérdezése során: " . $e->getMessage() . PHP_EOL;
+    echo "Hiba történt: " . $e->getMessage() . PHP_EOL;
 } 
